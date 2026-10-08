@@ -21,6 +21,7 @@ jobs:
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           persist-credentials: false
+          submodules: false
       - name: Run Virus Scan
         run: |
           mkdir -p reports
@@ -55,6 +56,7 @@ jobs:
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           persist-credentials: false
+          submodules: false
       - name: Install ShellCheck
         run: sudo apt-get update && sudo apt-get install -y shellcheck
       - name: Run ShellCheck
@@ -107,6 +109,7 @@ jobs:
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           persist-credentials: false
+          submodules: false
       - name: Install Trivy from Aqua Security APT repo
         run: |
           sudo apt-get update
@@ -134,7 +137,7 @@ jobs:
           {
             echo "| File | Line | Severity | Rule | Finding | Resolution |"
             echo "|------|-----:|----------|------|---------|------------|"
-            jq -r '.Results[]? as $result | $result.Misconfigurations[]? | "| \($result.Target | gsub("\\|"; "\\\\|") | gsub("[\\r\\n]+"; " ")) | \(.CauseMetadata.StartLine // "N/A") | \(.Severity) | \(.ID) | \(.Title | gsub("\\|"; "\\\\|") | gsub("[\\r\\n]+"; " ")) | \(.Resolution // "" | gsub("\\|"; "\\\\|") | gsub("[\\r\\n]+"; " ")) |"' "$report"
+            jq -r '.Results[]? as $result | $result.Misconfigurations[]? | "| \($result.Target | gsub("\\|"; "\\|") | gsub("[\\r\\n]+"; " ")) | \(.CauseMetadata.StartLine // "N/A") | \(.Severity) | \(.ID) | \(.Title | gsub("\\|"; "\\|") | gsub("[\\r\\n]+"; " ")) | \(.Resolution // "" | gsub("\\|"; "\\|") | gsub("[\\r\\n]+"; " ")) |"' "$report"
             if [ "$high_count" -eq 0 ] && [ "$critical_count" -eq 0 ]; then
               echo "| - | - | - | - | No HIGH or CRITICAL findings | - |"
             fi
@@ -174,6 +177,7 @@ jobs:
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           persist-credentials: false
+          submodules: false
       - name: Install Bandit
         run: |
           python3 -m venv bandit_venv
@@ -195,7 +199,7 @@ jobs:
             echo "Bandit report was not generated." >> "$GITHUB_STEP_SUMMARY"
             exit 1
           fi
-          jq -r '"| Severity | Findings |\n|----------|----------|\n| HIGH | \([.results[] | select(.issue_severity == \"HIGH\")] | length) |\n| MEDIUM | \([.results[] | select(.issue_severity == \"MEDIUM\")] | length) |\n| LOW | \([.results[] | select(.issue_severity == \"LOW\")] | length) |"' bandit-report.json >> "$GITHUB_STEP_SUMMARY"
+          jq -r '"| Severity | Findings |\n|----------|----------|\n| HIGH | \([.results[] | select(.issue_severity == "HIGH")] | length) |\n| MEDIUM | \([.results[] | select(.issue_severity == "MEDIUM")] | length) |\n| LOW | \([.results[] | select(.issue_severity == "LOW")] | length) |"' bandit-report.json >> "$GITHUB_STEP_SUMMARY"
           if jq -e '.results | length > 0' bandit-report.json > /dev/null; then
             echo "Bandit found security issues; see the uploaded report for details." >> "$GITHUB_STEP_SUMMARY"
           fi
@@ -247,6 +251,7 @@ jobs:
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           persist-credentials: false
+          submodules: false
       - name: Set up Python
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
@@ -370,7 +375,7 @@ jobs:
             trivy_job=${trivy_job:-$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID}
             body+=$'\n'"| Trivy config scan | [Open job]($trivy_job) |"
           fi
-          comment_id=$(gh api "repos/$GITHUB_REPOSITORY/issues/$PR_NUMBER/comments" --paginate --jq '.[] | select(.user.login == "github-actions[bot]" and ((.body // "") | contains("<!-- metro-vision-high-security-findings -->"))) | .id' | tail -n 1)
+          comment_id=$(gh api "repos/$GITHUB_REPOSITORY/issues/$PR_NUMBER/comments" --paginate --jq '.[] | select(.user.login == "github-actions[bot]" and ((.body // "") | contains("<!-- metro-vision-high-security-findings -->"))) | .id' | head -n 1)
           if [ -n "$comment_id" ]; then
             gh api "repos/$GITHUB_REPOSITORY/issues/comments/$comment_id" --method PATCH --field body="$body" > /dev/null
           else
