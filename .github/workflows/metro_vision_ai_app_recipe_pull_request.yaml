@@ -137,7 +137,7 @@ jobs:
           {
             echo "| File | Line | Severity | Rule | Finding | Resolution |"
             echo "|------|-----:|----------|------|---------|------------|"
-            jq -r '.Results[]? as $result | $result.Misconfigurations[]? | "| \($result.Target | gsub("\\|"; "\\|") | gsub("[\\r\\n]+"; " ")) | \(.CauseMetadata.StartLine // "N/A") | \(.Severity) | \(.ID) | \(.Title | gsub("\\|"; "\\|") | gsub("[\\r\\n]+"; " ")) | \(.Resolution // "" | gsub("\\|"; "\\|") | gsub("[\\r\\n]+"; " ")) |"' "$report"
+            jq -r '.Results[]? as $result | $result.Misconfigurations[]? | "| \($result.Target | gsub("\\|"; "\\|") | gsub("[\\r\\n]+"; " ")) | \(.CauseMetadata.StartLine // "N/A") | \(.Severity) | \(.ID) | \(.PrimaryCause // "N/A") | \(.Resolution // "N/A") |"' "$report"
             if [ "$high_count" -eq 0 ] && [ "$critical_count" -eq 0 ]; then
               echo "| - | - | - | - | No HIGH or CRITICAL findings | - |"
             fi
